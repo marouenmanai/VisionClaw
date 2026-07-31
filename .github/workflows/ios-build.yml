@@ -1,0 +1,55 @@
+name: Build VisionClaw iOS
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-ios:
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Select latest Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode.app
+          xcodebuild -version
+
+      - name: Resolve Swift Packages
+        working-directory: samples/CameraAccess
+        run: |
+          xcodebuild \
+            -project CameraAccess.xcodeproj \
+            -resolvePackageDependencies
+
+      - name: Build VisionClaw
+        working-directory: samples/CameraAccess
+        run: |
+          mkdir -p build
+
+          xcodebuild \
+            -project CameraAccess.xcodeproj \
+            -scheme CameraAccess \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination generic/platform=iOS \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: Archive build folder
+        run: |
+          cd samples/CameraAccess
+          zip -r VisionClaw-iOS.zip build
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: VisionClaw-iOS
+          path: samples/CameraAccess/VisionClaw-iOS.zip
