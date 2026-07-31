@@ -28,13 +28,21 @@ jobs:
 
           enum Secrets {
               static let apiKey = ""
+              static let geminiAPIKey = ""
+              static let openClawHost = ""
+              static let openClawPort = ""
+              static let openClawHookToken = ""
+              static let openClawGatewayToken = ""
+              static let cloudGatewayURL = ""
+              static let cloudGatewayToken = ""
           }
           EOF
 
       - name: Resolve Swift Packages
         run: |
           cd samples/CameraAccess
-          xcodebuild -resolvePackageDependencies -project CameraAccess.xcodeproj
+          xcodebuild -resolvePackageDependencies \
+            -project CameraAccess.xcodeproj
 
       - name: Build
         run: |
@@ -42,11 +50,12 @@ jobs:
           xcodebuild \
             -project CameraAccess.xcodeproj \
             -scheme CameraAccess \
-            -sdk iphoneos \
             -configuration Release \
+            -sdk iphoneos \
             CODE_SIGNING_ALLOWED=NO
 
       - name: Upload Build
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: VisionClaw-iOS
