@@ -23,14 +23,28 @@ jobs:
       - name: Generate Secrets.swift
         run: |
           mkdir -p samples/CameraAccess/CameraAccess
+
           cat > samples/CameraAccess/CameraAccess/Secrets.swift <<'EOF'
           import Foundation
 
           enum Secrets {
+
+              // Gemini
               static let geminiAPIKey = ""
+
+              // Cloud Gateway
               static let cloudGatewayURL = ""
               static let cloudGatewayToken = ""
+
+              // WebRTC
               static let webrtcSignalingURL = ""
+
+              // OpenClaw
+              static let openClawHost = "127.0.0.1"
+              static let openClawPort = 8080
+              static let openClawHookToken = ""
+              static let openClawGatewayToken = ""
+
           }
           EOF
 
@@ -54,10 +68,10 @@ jobs:
             CODE_SIGNING_ALLOWED=NO
 
       - name: Upload Build
-        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: CameraAccess
           path: |
             samples/CameraAccess/build
             samples/CameraAccess/**/*.xcarchive
+          if-no-files-found: warn
