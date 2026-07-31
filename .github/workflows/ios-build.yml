@@ -8,48 +8,46 @@ on:
 
 jobs:
   build-ios:
-    runs-on: macos-15
+    runs-on: macos-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Select latest Xcode
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Generate Secrets.swift
         run: |
-          sudo xcode-select -s /Applications/Xcode.app
-          xcodebuild -version
+          mkdir -p samples/CameraAccess/CameraAccess
+          cat << 'EOF' > samples/CameraAccess/CameraAccess/Secrets.swift
+          import Foundation
+
+          enum Secrets {
+              static let apiKey = ""
+          }
+          EOF
 
       - name: Resolve Swift Packages
-        working-directory: samples/CameraAccess
         run: |
-          xcodebuild \
-            -project CameraAccess.xcodeproj \
-            -resolvePackageDependencies
+          cd samples/CameraAccess
+          xcodebuild -resolvePackageDependencies -project CameraAccess.xcodeproj
 
-      - name: Build VisionClaw
-        working-directory: samples/CameraAccess
+      - name: Build
         run: |
-          mkdir -p build
-
+          cd samples/CameraAccess
           xcodebuild \
             -project CameraAccess.xcodeproj \
             -scheme CameraAccess \
-            -configuration Release \
             -sdk iphoneos \
-            -destination generic/platform=iOS \
-            -derivedDataPath build \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY="" \
-            build
+            -configuration Release \
+            CODE_SIGNING_ALLOWED=NO
 
-      - name: Archive build folder
-        run: |
-          cd samples/CameraAccess
-          zip -r VisionClaw-iOS.zip build
-
-      - name: Upload Artifact
+      - name: Upload Build
         uses: actions/upload-artifact@v4
         with:
           name: VisionClaw-iOS
-          path: samples/CameraAccess/VisionClaw-iOS.zip
+          path: samples/CameraAccess/build
