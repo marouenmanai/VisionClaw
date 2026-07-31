@@ -17,29 +17,25 @@ jobs:
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode.app
 
-      - name: Show Xcode version
+      - name: Show Xcode Version
         run: xcodebuild -version
 
       - name: Generate Secrets.swift
         run: |
           mkdir -p samples/CameraAccess/CameraAccess
 
-          cat > samples/CameraAccess/CameraAccess/Secrets.swift << 'EOF'
+          cat > samples/CameraAccess/CameraAccess/Secrets.swift <<EOF
           import Foundation
 
           enum Secrets {
-
-              // Gemini
               static let apiKey = ""
               static let geminiAPIKey = ""
 
-              // Local OpenClaw
               static let openClawHost = "127.0.0.1"
               static let openClawPort: Int = 8080
               static let openClawHookToken = ""
               static let openClawGatewayToken = ""
 
-              // Cloud Gateway
               static let cloudGatewayURL = ""
               static let cloudGatewayToken = ""
           }
@@ -52,25 +48,29 @@ jobs:
             -project CameraAccess.xcodeproj \
             -resolvePackageDependencies
 
-      - name: Build
+      - name: Archive App
         working-directory: samples/CameraAccess
         run: |
-          xcodebuild \
+          mkdir -p build
+
+          xcodebuild archive \
             -project CameraAccess.xcodeproj \
             -scheme CameraAccess \
             -configuration Release \
-            -sdk iphoneos \
+            -destination "generic/platform=iOS" \
+            -archivePath build/CameraAccess.xcarchive \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY=""
 
-      - name: Upload Build
-        if: always()
+      - name: Show Build Folder
+        run: |
+          echo "===== BUILD CONTENT ====="
+          find samples/CameraAccess/build || true
+
+      - name: Upload Archive
         uses: actions/upload-artifact@v4
         with:
-          name: VisionClaw-iOS
-          path: |
-            samples/CameraAccess/build
-            samples/CameraAccess/**/*.app
-            samples/CameraAccess/**/*.ipa
-            samples/CameraAccess/**/*.xcarchive
+          name: CameraAccess-xcarchive
+          path: samples/CameraAccess/build/CameraAccess.xcarchive
+          if-no-files-found: error
