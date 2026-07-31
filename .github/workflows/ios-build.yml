@@ -17,20 +17,19 @@ jobs:
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode.app
 
-      - name: Xcode Version
+      - name: Show Xcode version
         run: xcodebuild -version
 
       - name: Generate Secrets.swift
         run: |
+          mkdir -p samples/CameraAccess/CameraAccess
           cat > samples/CameraAccess/CameraAccess/Secrets.swift <<'EOF'
           import Foundation
 
           enum Secrets {
               static let geminiAPIKey = ""
-              static let openClawHost = ""
-              static let openClawPort = 8789
-              static let openClawHookToken = ""
-              static let openClawGatewayToken = ""
+              static let cloudGatewayURL = ""
+              static let cloudGatewayToken = ""
               static let webrtcSignalingURL = ""
           }
           EOF
@@ -54,21 +53,11 @@ jobs:
             archive \
             CODE_SIGNING_ALLOWED=NO
 
-      - name: Create IPA
-        working-directory: samples/CameraAccess
-        run: |
-          mkdir Payload
-          cp -R build/CameraAccess.xcarchive/Products/Applications/CameraAccess.app Payload/
-          zip -r CameraAccess.ipa Payload
-
-      - name: Upload IPA
+      - name: Upload Build
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: CameraAccess-IPA
-          path: samples/CameraAccess/CameraAccess.ipa
-
-      - name: Upload Archive
-        uses: actions/upload-artifact@v4
-        with:
-          name: CameraAccess-XCArchive
-          path: samples/CameraAccess/build/CameraAccess.xcarchive
+          name: CameraAccess
+          path: |
+            samples/CameraAccess/build
+            samples/CameraAccess/**/*.xcarchive
