@@ -23,40 +23,54 @@ jobs:
       - name: Generate Secrets.swift
         run: |
           mkdir -p samples/CameraAccess/CameraAccess
-          cat << 'EOF' > samples/CameraAccess/CameraAccess/Secrets.swift
+
+          cat > samples/CameraAccess/CameraAccess/Secrets.swift << 'EOF'
           import Foundation
 
           enum Secrets {
+
+              // Gemini
               static let apiKey = ""
               static let geminiAPIKey = ""
-              static let openClawHost = ""
-              static let openClawPort = ""
+
+              // Local OpenClaw
+              static let openClawHost = "127.0.0.1"
+              static let openClawPort: Int = 8080
               static let openClawHookToken = ""
               static let openClawGatewayToken = ""
+
+              // Cloud Gateway
               static let cloudGatewayURL = ""
               static let cloudGatewayToken = ""
           }
           EOF
 
       - name: Resolve Swift Packages
+        working-directory: samples/CameraAccess
         run: |
-          cd samples/CameraAccess
-          xcodebuild -resolvePackageDependencies \
-            -project CameraAccess.xcodeproj
+          xcodebuild \
+            -project CameraAccess.xcodeproj \
+            -resolvePackageDependencies
 
       - name: Build
+        working-directory: samples/CameraAccess
         run: |
-          cd samples/CameraAccess
           xcodebuild \
             -project CameraAccess.xcodeproj \
             -scheme CameraAccess \
             -configuration Release \
             -sdk iphoneos \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
 
       - name: Upload Build
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: VisionClaw-iOS
-          path: samples/CameraAccess/build
+          path: |
+            samples/CameraAccess/build
+            samples/CameraAccess/**/*.app
+            samples/CameraAccess/**/*.ipa
+            samples/CameraAccess/**/*.xcarchive
