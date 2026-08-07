@@ -183,6 +183,10 @@ class GeminiLiveService: ObservableObject {
 
   private func sendSetupMessage() {
     var generationConfig: [String: Any] = ["responseModalities": ["AUDIO"]]
+    // Ask the model to process each frame at full detail. Without this the Live
+    // API tokenizes frames at the low default, which is why fine text and small
+    // objects came back as "the image is blurry".
+    generationConfig["mediaResolution"] = "MEDIA_RESOLUTION_HIGH"
     if GeminiConfig.supportsThinkingConfig {
       generationConfig["thinkingConfig"] = ["thinkingBudget": 0]
     }
@@ -215,9 +219,11 @@ class GeminiLiveService: ObservableObject {
           "activityHandling": "START_OF_ACTIVITY_INTERRUPTS",
           "turnCoverage": "TURN_INCLUDES_ALL_INPUT"
         ],
+        // Compress sooner. At 80k the session dragged a huge context before any
+        // trimming happened, and replies slowed to 15-20s the longer it ran.
         "contextWindowCompression": [
           "slidingWindow": [
-            "targetTokens": 80000
+            "targetTokens": 32000
           ]
         ],
         "inputAudioTranscription": [:] as [String: Any],
